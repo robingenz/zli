@@ -15,10 +15,12 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            verbose: z.boolean().default(false),
-            debug: z.boolean().default(false),
-          })),
+          options: defineOptions(
+            z.object({
+              verbose: z.boolean().default(false),
+              debug: z.boolean().default(false),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -32,10 +34,12 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            name: z.string(),
-            count: z.string(),
-          })),
+          options: defineOptions(
+            z.object({
+              name: z.string(),
+              count: z.string(),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -49,10 +53,12 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            name: z.string(),
-            count: z.string(),
-          })),
+          options: defineOptions(
+            z.object({
+              name: z.string(),
+              count: z.string(),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -71,7 +77,7 @@ describe('index', () => {
               verbose: z.boolean().default(false),
               name: z.string(),
             }),
-            { v: 'verbose', n: 'name' }
+            { v: 'verbose', n: 'name' },
           ),
           action: vi.fn(),
         }),
@@ -86,9 +92,11 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            files: z.array(z.string()),
-          })),
+          options: defineOptions(
+            z.object({
+              files: z.array(z.string()),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -102,9 +110,11 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            files: z.array(z.string()),
-          })),
+          options: defineOptions(
+            z.object({
+              files: z.array(z.string()),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -118,9 +128,11 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            env: z.string(),
-          })),
+          options: defineOptions(
+            z.object({
+              env: z.string(),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -136,17 +148,19 @@ describe('index', () => {
       commands: {
         create: defineCommand({
           description: 'Create something',
-          options: defineOptions(z.object({
-            name: z.string(),
-            verbose: z.boolean().default(false),
-          })),
+          options: defineOptions(
+            z.object({
+              name: z.string(),
+              verbose: z.boolean().default(false),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
     });
 
     const result = processConfig(config, ['create', '--name', 'test']);
-    
+
     expect(result.command.description).toBe('Create something');
     expect(result.options).toEqual({ name: 'test', verbose: false });
     expect(result.args).toEqual([]);
@@ -156,9 +170,11 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            androidMax: z.string(),
-          })),
+          options: defineOptions(
+            z.object({
+              androidMax: z.string(),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -172,7 +188,7 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          args: z.tuple([z.string(), z.string().transform(s => parseInt(s, 10) * 2)]),
+          args: z.tuple([z.string(), z.string().transform((s) => parseInt(s, 10) * 2)]),
           action: vi.fn(),
         }),
       },
@@ -206,9 +222,11 @@ describe('index', () => {
     const config = defineConfig({
       commands: {
         test: defineCommand({
-          options: defineOptions(z.object({
-            files: z.array(z.string()),
-          })),
+          options: defineOptions(
+            z.object({
+              files: z.array(z.string()),
+            }),
+          ),
           action: vi.fn(),
         }),
       },
@@ -220,9 +238,11 @@ describe('index', () => {
 
   it('should handle global options', () => {
     const config = defineConfig({
-      globalOptions: defineOptions(z.object({
-        config: z.string().optional(),
-      })),
+      globalOptions: defineOptions(
+        z.object({
+          config: z.string().optional(),
+        }),
+      ),
       commands: {
         test: defineCommand({ action: vi.fn() }),
       },
