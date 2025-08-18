@@ -1,0 +1,459 @@
+import { z } from 'zod';
+import type { CommandDefinition, DefineConfig, OptionsDefinition, ProcessResult } from './types.js';
+
+/**
+ * Parses command line arguments into flags and non-flag arguments.
+ * Handles both long flags (--flag) and short flags (-f), including flag clustering (-abc).
+ * Supports flags with values (--flag=value or --flag value) and boolean flags.
+ * When the same flag is specified multiple times, values are collected into an array.
+ *
+ * @param args - Array of command line arguments to parse
+ * @returns Object containing parsed flags and non-flag arguments under '_' key
+ *
+ * @example
+ * parseFlags(['--verbose', '--count', '5', 'file.txt'])
+ * // Returns: { verbose: true, count: '5', _: ['file.txt'] }
+ *
+ * @example
+ * parseFlags(['--custom-property', 'key1=value1', '--custom-property', 'key2=value2'])
+ * // Returns: { 'custom-property': ['key1=value1', 'key2=value2'], _: [] }
+ */
+function parseFlags(args: string[]): Record<string, string | boolean | string[]> {
+  const flags: Record<string, string | boolean | string[]> = {};
+  const nonFlags: string[] = [];
+
+  const addFlag = (key: string, value: string | boolean) => {
+    if (key in flags) {
+      const existing = flags[key];
+      if (Array.isArray(existing)) {
+        existing.push(value as string);
+      } else {
+        flags[key] = [existing as string, value as string];
+      }
+    } else {
+      flags[key] = value;
+    }
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg) continue;
+
+    if (arg.startsWith('--')) {
+      const key = arg.slice(2);
+      if (key.includes('=')) {
+        const [flagName, ...valueParts] = key.split('=');
+        if (flagName) {
+          addFlag(flagName, valueParts.join('='));
+        }
+      } else {
+        const nextArg = args[i + 1];
+        if (nextArg && !nextArg.startsWith('-')) {
+          addFlag(key, nextArg);
+          i++;
+        } else {
+          addFlag(key, true);
+        }
+      }
+    } else if (arg.startsWith('-') && arg.length > 1) {
+      const key = arg.slice(1);
+      if (key.length === 1) {
+        const nextArg = args[i + 1];
+        if (nextArg && !nextArg.startsWith('-')) {
+          addFlag(key, nextArg);
+          i++;
+        } else {
+          addFlag(key, true);
+        }
+      } else {
+        for (const char of key) {
+          addFlag(char, true);
+        }
+      }
+    } else {
+      nonFlags.push(arg);
+    }
+  }
+
+  return { ...flags, _: nonFlags };
+}
+
+/**
+ * Resolves flag aliases by replacing alias keys with their target keys.
+ * If both alias and target exist, the alias value takes precedence.
+ *
+ * @param flags - Object containing parsed flags
+ * @param aliases - Optional mapping of alias keys to target keys
+ * @returns New flags object with aliases resolved to their target keys
+ *
+ * @example
+ * resolveAliases({ v: true, verbose: false }, { v: 'verbose' })
+ * // Returns: { verbose: true }
+ */
+function resolveAliases(flags: Record<string, any>, aliases?: Record<string, string>): Record<string, any> {
+  if (!aliases) return flags;
+
+  const resolved = { ...flags };
+  for (const [alias, target] of Object.entries(aliases)) {
+    if (alias in resolved) {
+      resolved[target] = resolved[alias];
+      delete resolved[alias];
+    }
+  }
+  return resolved;
+}
+
+/**
+ * Converts a camelCase string to kebab-case.
+ *
+ * @param str - The camelCase string to convert
+ * @returns The kebab-case version of the input string
+ *
+ * @example
+ * camelToKebab('androidMax') // Returns: 'android-max'
+ * camelToKebab('expiresInDays') // Returns: 'expires-in-days'
+ */
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
+/**
+ * Resolves kebab-case flags to their camelCase equivalents based on the schema.
+ * Only converts kebab-case flags when the camelCase version is not already present.
+ * This allows users to pass --android-max instead of --androidMax.
+ *
+ * @param flags - Object containing parsed flags
+ * @param schema - Zod schema object defining the expected camelCase keys
+ * @returns New flags object with kebab-case flags converted to camelCase
+ *
+ * @example
+ * resolveKebabCase({ 'android-max': '10' }, schema)
+ * // Returns: { androidMax: '10' } (if androidMax is in schema)
+ */
+function resolveKebabCase(flags: Record<string, any>, schema: z.ZodObject<any>): Record<string, any> {
+  const resolved = { ...flags };
+  const schemaKeys = Object.keys(schema.shape);
+
+  for (const camelKey of schemaKeys) {
+    if (!(camelKey in resolved)) {
+      const kebabKey = camelToKebab(camelKey);
+      if (kebabKey in resolved) {
+        resolved[camelKey] = resolved[kebabKey];
+        delete resolved[kebabKey];
+      }
+    }
+  }
+
+  return resolved;
+}
+
+/**
+ * Builds and displays a header line with description and meta information.
+ *
+ * @param options - Header display options
+ */
+function displayHeader(options: {
+  commandName?: string | undefined;
+  description?: string | undefined;
+  packageName?: string | undefined;
+  version?: string | undefined;
+}): void {
+  const parts = [];
+  if (options.description) parts.push(options.description);
+
+  const metaParts = [];
+  if (options.packageName) metaParts.push(options.packageName);
+  if (options.commandName) metaParts.push(options.commandName);
+  if (options.version) metaParts.push(`v${options.version}`);
+
+  if (metaParts.length > 0) {
+    parts.push(`(${metaParts.join(' ')})`);
+  }
+
+  if (parts.length > 0) {
+    console.log(`\x1b[90m${parts.join(' ')}\x1b[0m\n`);
+  }
+}
+
+/**
+ * Displays the main help screen with all available commands.
+ * Shows CLI version, usage instructions, and a formatted list of commands with descriptions.
+ *
+ * @param commands - Object mapping command names to their definitions
+ * @param meta - Meta information about the CLI
+ */
+function displayHelp<T extends Record<string, CommandDefinition<any, any>>>(
+  commands: T,
+  meta?: { name?: string; version?: string; description?: string },
+): void {
+  displayHeader({
+    description: meta?.description,
+    packageName: meta?.name,
+    version: meta?.version,
+  });
+
+  const commandNames = Object.keys(commands).join('|');
+  const usageName = meta?.name || 'cli';
+  console.log(`\x1b[1mUSAGE\x1b[0m \x1b[36m${usageName} ${commandNames}\x1b[0m\n`);
+
+  console.log('\x1b[1mCOMMANDS\x1b[0m\n');
+
+  // Find the maximum command name length for alignment
+  const maxLength = Math.max(...Object.keys(commands).map((name) => name.length));
+
+  for (const [name, command] of Object.entries(commands)) {
+    const description = command.description || '';
+    const padding = ' '.repeat(Math.max(2, maxLength - name.length + 4));
+    console.log(`  \x1b[36m${name}\x1b[0m${padding}${description}`);
+  }
+
+  if (meta?.name) {
+    console.log(`\nUse \x1b[36m${meta.name} <command> --help\x1b[0m for more information about a command.`);
+  }
+}
+
+/**
+ * Displays help information for a specific command.
+ * Shows command description, usage, and available options with their descriptions.
+ *
+ * @param commandName - Name of the command to show help for
+ * @param command - Command definition containing options and description
+ * @param meta - Meta information about the CLI
+ */
+function displayCommandHelp(
+  commandName: string,
+  command: CommandDefinition<any, any>,
+  meta?: { name?: string; version?: string; description?: string },
+): void {
+  displayHeader({
+    commandName,
+    description: command.description,
+    packageName: meta?.name,
+    version: meta?.version,
+  });
+
+  // Build usage line
+  const usageName = meta?.name || 'cli';
+  let usageLine = `\x1b[1mUSAGE\x1b[0m \x1b[36m${usageName} ${commandName}`;
+
+  // Add [OPTIONS] if the command has options
+  if (command.options) {
+    usageLine += ' [OPTIONS]';
+  }
+
+  // Add args placeholder if the command expects args
+  if (command.args) {
+    usageLine += ' [ARGS]';
+  }
+
+  console.log(`${usageLine}\x1b[0m\n`);
+
+  // Display options if they exist
+  if (command.options?.schema) {
+    console.log('\x1b[1mOPTIONS\x1b[0m\n');
+
+    const shape = command.options.schema.shape;
+    const aliases = command.options.aliases || {};
+
+    // Calculate the maximum length for consistent padding
+    let maxLength = 0;
+    for (const [key] of Object.entries(shape)) {
+      const alias = Object.keys(aliases).find((alias) => aliases[alias] === key);
+      const kebabKey = camelToKebab(key);
+      const visibleLength = `  --${kebabKey}${alias ? `, -${alias}` : ''}`.length;
+      maxLength = Math.max(maxLength, visibleLength);
+    }
+
+    for (const [key, zodType] of Object.entries(shape)) {
+      const description = (zodType as any)._def?.description || '';
+      const alias = Object.keys(aliases).find((alias) => aliases[alias] === key);
+      const kebabKey = camelToKebab(key);
+
+      let optionLine = `  \x1b[36m--${kebabKey}\x1b[0m`;
+      if (alias) {
+        optionLine += `, \x1b[36m-${alias}\x1b[0m`;
+      }
+
+      // Add padding and description (accounting for color codes)
+      const visibleLength = `  --${kebabKey}${alias ? `, -${alias}` : ''}`.length;
+      const padding = ' '.repeat(Math.max(2, maxLength - visibleLength + 4));
+      console.log(`${optionLine}${padding}${description}`);
+    }
+  }
+}
+
+/**
+ * Normalizes single values to arrays for fields that are defined as arrays in the schema.
+ * This ensures that when a user provides a single value for an array field,
+ * it gets wrapped in an array before validation.
+ *
+ * @param options - Object containing parsed options
+ * @param schema - Zod schema object defining the expected field types
+ * @returns New options object with single values normalized to arrays where needed
+ *
+ * @example
+ * normalizeArrayFields({ customProperty: 'key=value' }, schema)
+ * // Returns: { customProperty: ['key=value'] } (if customProperty is defined as array in schema)
+ */
+function normalizeArrayFields(options: Record<string, any>, schema: z.ZodObject<any>): Record<string, any> {
+  const normalized = { ...options };
+  const shape = schema.shape;
+
+  for (const [key, zodType] of Object.entries(shape)) {
+    if (key in normalized) {
+      // Check if this field is defined as an array (including optional arrays)
+      const isArrayField = isZodArrayType(zodType);
+
+      if (isArrayField && !Array.isArray(normalized[key])) {
+        // Convert single value to array
+        normalized[key] = [normalized[key]];
+      }
+    }
+  }
+
+  return normalized;
+}
+
+/**
+ * Checks if a Zod type is an array type, handling optional and default wrappers.
+ *
+ * @param zodType - The Zod type to check
+ * @returns True if the type is an array type
+ */
+function isZodArrayType(zodType: any): boolean {
+  // Handle ZodOptional and ZodDefault wrappers, but stop when we find the actual type
+  let innerType = zodType;
+
+  // Only unwrap wrapper types like ZodOptional and ZodDefault, not the content types
+  while (innerType._def && (innerType._def.innerType || innerType._def.type)) {
+    const next = innerType._def.innerType || innerType._def.type;
+
+    // Stop unwrapping if we reach a content type (like ZodArray, ZodString, etc.)
+    if (innerType.constructor.name === 'ZodOptional' || innerType.constructor.name === 'ZodDefault') {
+      innerType = next;
+    } else {
+      break;
+    }
+  }
+
+  // Check for ZodArray type name as instanceof might not work with different zod instances
+  return innerType instanceof z.ZodArray || (innerType._def && innerType._def.typeName === 'ZodArray');
+}
+
+/**
+ * Validates and transforms command options using Zod schema validation.
+ * Processes aliases and kebab-case conversion before validation.
+ * Ensures that single values for array fields are converted to arrays.
+ *
+ * @param flags - Raw parsed flags from command line
+ * @param optionsDef - Optional options definition with schema and aliases
+ * @returns Validated options object matching the schema
+ * @throws Error if validation fails
+ *
+ * @example
+ * validateOptions({ 'android-max': '10' }, { schema: z.object({ androidMax: z.string() }) })
+ * // Returns: { androidMax: '10' }
+ *
+ * @example
+ * validateOptions({ 'custom-property': 'key=value' }, { schema: z.object({ customProperty: z.array(z.string()) }) })
+ * // Returns: { customProperty: ['key=value'] }
+ */
+function validateOptions<T extends z.ZodObject<any> = z.ZodObject<any>>(
+  flags: Record<string, any>,
+  optionsDef?: OptionsDefinition<T>,
+): any {
+  if (!optionsDef) {
+    return {};
+  }
+
+  const resolvedAliases = resolveAliases(flags, optionsDef.aliases);
+  const resolvedKebab = resolveKebabCase(resolvedAliases, optionsDef.schema);
+  const { _, ...options } = resolvedKebab;
+
+  // Normalize single values to arrays for fields that expect arrays
+  const normalizedOptions = normalizeArrayFields(options, optionsDef.schema);
+
+  return optionsDef.schema.parse(normalizedOptions);
+}
+
+/**
+ * Main entry point for processing CLI configuration and arguments.
+ * Parses command line arguments, validates options, and returns the processed result.
+ * Handles help display, command validation, and option processing.
+ *
+ * @param config - CLI configuration with commands and global options
+ * @param args - Command line arguments (typically process.argv.slice(2))
+ * @returns Processed result containing command, options, and arguments
+ * @throws Error for invalid commands or validation failures
+ *
+ * @example
+ * processConfig(config, ['apps:bundles:create', '--android-max', '10'])
+ * // Returns: { command: ..., options: { androidMax: '10' }, args: [], globalOptions: {} }
+ */
+export function processConfig<
+  TGlobalOptions extends z.ZodObject<any> = z.ZodObject<any>,
+  TCommands extends Record<string, CommandDefinition<any, any>> = {},
+>(config: DefineConfig<TGlobalOptions, TCommands>, args: string[]): ProcessResult<TCommands[keyof TCommands]> {
+  const parsedFlags = parseFlags(args);
+  const commandArgs = (parsedFlags._ as string[]) || [];
+
+  // Find the command
+  const commandName = commandArgs[0];
+
+  if (!commandName) {
+    if (parsedFlags.help === true) {
+      // Show help and exit successfully
+      displayHelp(config.commands, config.meta);
+      process.exit(0);
+    } else {
+      // Show help and throw error
+      displayHelp(config.commands, config.meta);
+      throw new Error('No command specified.');
+    }
+  }
+
+  const command = config.commands[commandName];
+  if (!command) {
+    displayHelp(config.commands, config.meta);
+    throw new Error(`Unknown command: \x1b[36m${commandName}\x1b[0m`);
+  }
+
+  const remainingArgs = commandArgs.slice(1);
+
+  // Check for help flag for the specific command
+  if (parsedFlags.help === true) {
+    displayCommandHelp(commandName, command, config.meta);
+    process.exit(0);
+  }
+
+  // Process global options
+  const globalOptions = validateOptions(parsedFlags, config.globalOptions);
+
+  // Process command options
+  const options = validateOptions(parsedFlags, command.options);
+
+  // Validate args if schema is provided
+  let validatedArgs: any = remainingArgs;
+  if (command.args) {
+    try {
+      validatedArgs = command.args.parse(remainingArgs);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const issues = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+        throw new Error(`Argument validation failed: ${issues}`);
+      }
+      throw error;
+    }
+  }
+
+  return {
+    globalOptions,
+    command,
+    options,
+    args: validatedArgs,
+  } as ProcessResult<TCommands[keyof TCommands]>;
+}
+
+// Export main functions and types from config
+export { defineOptions, defineCommand, defineConfig } from './config.js';
+export type { OptionsDefinition, CommandDefinition, DefineConfig, ProcessResult } from './types.js';

@@ -1,0 +1,67 @@
+{
+  "name": "zli",
+  "version": "0.0.1",
+  "description": "A CLI parser built with Zod.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "zli-example": "./example.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robingenz/zli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robingenz/zli/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "release": "commit-and-tag-version",
+    "release:dry-run": "npm run release -- --dry-run"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "commit-and-tag-version": "^12.5.2",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4",
+    "zod": "^4.0.17"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "cli",
+    "parser",
+    "zod",
+    "typescript",
+    "command-line"
+  ],
+  "author": "Robin Genz <mail@robingenz.dev>",
+  "license": "MIT"
+}
