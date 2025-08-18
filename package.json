@@ -28,7 +28,6 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rimraf dist",
-    "prepublishOnly": "npm run clean && npm run build",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "test": "vitest",
@@ -36,7 +35,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "release": "commit-and-tag-version",
-    "release:dry-run": "npm run release -- --dry-run"
+    "release:dry-run": "npm run release -- --dry-run",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "peerDependencies": {
     "zod": "^4.0.0"
