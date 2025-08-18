@@ -1,4 +1,4 @@
-# zli
+# @robingenz/zli
 
 A powerful CLI parser built with TypeScript and Zod for type-safe command-line interfaces.
 
@@ -10,14 +10,14 @@ A powerful CLI parser built with TypeScript and Zod for type-safe command-line i
 - 🔀 **Smart conversion**: Automatic kebab-case to camelCase conversion.
 - 🏷️ **Alias support**: Define short aliases for any option.
 - 📦 **Array handling**: Automatic normalization of single values to arrays.
-- ❓ **Usage information**: Automatic help generation for commands and options.
+- ❓ **Help message**: Automatic help generation for commands and options.
 - ⚠️ **Error handling**: Clear, actionable error messages.
 - 📦 **ESM support**: Modern ES modules with full TypeScript support.
 
 ## Installation
 
 ```bash
-npm install zli zod
+npm install @robingenz/zli zod
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ npm install zli zod
 
 ```javascript
 import { z } from 'zod';
-import { defineConfig, defineCommand, defineOptions, processConfig } from 'zli';
+import { defineConfig, defineCommand, defineOptions, processConfig } from '@robingenz/zli';
 
 // Define a simple command
 const greetCommand = defineCommand({
@@ -145,7 +145,7 @@ const options = defineOptions(
 
 ### Flag Parsing
 
-zli supports various flag formats:
+`@robingenz/zli` supports various flag formats:
 
 ```bash
 # Long flags

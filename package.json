@@ -1,5 +1,5 @@
 {
-  "name": "zli",
+  "name": "@robingenz/zli",
   "version": "0.0.1",
   "description": "A CLI parser built with Zod.",
   "type": "module",
