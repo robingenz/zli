@@ -1,6 +1,8 @@
 # @robingenz/zli
 
-[![npm version](https://img.shields.io/npm/v/@robingenz/zli)](https://www.npmjs.com/package/@robingenz/zli) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/robingenz/zli/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@robingenz/zli)](https://www.npmjs.com/package/@robingenz/zli)
+[![npm downloads](https://img.shields.io/npm/dm/@robingenz/zli)](https://www.npmjs.com/package/@robingenz/zli)
+[![license](https://img.shields.io/npm/l/@robingenz/zli)](https://github.com/robingenz/zli/blob/main/LICENSE)
 
 A powerful CLI parser built with TypeScript and Zod for type-safe command-line interfaces.
 
