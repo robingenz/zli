@@ -236,19 +236,4 @@ describe('index', () => {
     expect(result.options).toEqual({ files: ['single.txt'] });
   });
 
-  it('should handle global options', () => {
-    const config = defineConfig({
-      globalOptions: defineOptions(
-        z.object({
-          config: z.string().optional(),
-        }),
-      ),
-      commands: {
-        test: defineCommand({ action: vi.fn() }),
-      },
-    });
-
-    const result = processConfig(config, ['test', '--config', 'my-config.json']);
-    expect(result.globalOptions).toEqual({ config: 'my-config.json' });
-  });
 });

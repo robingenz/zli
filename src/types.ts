@@ -19,7 +19,6 @@ export interface CommandDefinition<
 }
 
 export interface DefineConfig<
-  TGlobalOptions extends z.ZodObject<any> = z.ZodObject<any>,
   TCommands extends Record<string, CommandDefinition<any, any>> = {},
 > {
   meta?: {
@@ -27,12 +26,10 @@ export interface DefineConfig<
     version?: string;
     description?: string;
   };
-  globalOptions?: OptionsDefinition<TGlobalOptions>;
   commands: TCommands;
 }
 
 export interface ProcessResult<TCommand extends CommandDefinition<any, any> = CommandDefinition<any, any>> {
-  globalOptions: any;
   command: TCommand;
   options: any;
   args: any;

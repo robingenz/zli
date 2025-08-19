@@ -381,19 +381,18 @@ function validateOptions<T extends z.ZodObject<any> = z.ZodObject<any>>(
  * Parses command line arguments, validates options, and returns the processed result.
  * Handles help display, command validation, and option processing.
  *
- * @param config - CLI configuration with commands and global options
+ * @param config - CLI configuration with commands
  * @param args - Command line arguments (typically process.argv.slice(2))
  * @returns Processed result containing command, options, and arguments
  * @throws Error for invalid commands or validation failures
  *
  * @example
  * processConfig(config, ['apps:bundles:create', '--android-max', '10'])
- * // Returns: { command: ..., options: { androidMax: '10' }, args: [], globalOptions: {} }
+ * // Returns: { command: ..., options: { androidMax: '10' }, args: [] }
  */
 export function processConfig<
-  TGlobalOptions extends z.ZodObject<any> = z.ZodObject<any>,
   TCommands extends Record<string, CommandDefinition<any, any>> = {},
->(config: DefineConfig<TGlobalOptions, TCommands>, args: string[]): ProcessResult<TCommands[keyof TCommands]> {
+>(config: DefineConfig<TCommands>, args: string[]): ProcessResult<TCommands[keyof TCommands]> {
   const parsedFlags = parseFlags(args);
   const commandArgs = (parsedFlags._ as string[]) || [];
 
@@ -426,9 +425,6 @@ export function processConfig<
     process.exit(0);
   }
 
-  // Process global options
-  const globalOptions = validateOptions(parsedFlags, config.globalOptions);
-
   // Process command options
   const options = validateOptions(parsedFlags, command.options);
 
@@ -447,7 +443,6 @@ export function processConfig<
   }
 
   return {
-    globalOptions,
     command,
     options,
     args: validatedArgs,

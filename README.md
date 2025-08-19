@@ -102,22 +102,6 @@ const copyCommand = defineCommand({
 });
 ```
 
-#### Global Options
-
-```javascript
-const config = defineConfig({
-  meta: { name: 'cli', version: '1.0.0' },
-  globalOptions: defineOptions(
-    z.object({
-      config: z.string().optional().describe('Config file path'),
-      verbose: z.boolean().default(false).describe('Verbose output'),
-    }),
-    { c: 'config', v: 'verbose' }
-  ),
-  commands: { /* your commands */ },
-});
-```
-
 #### Array Options
 
 ```javascript
@@ -187,7 +171,6 @@ Define a command with options, arguments, and action.
 Define the CLI configuration.
 
 - `meta`: CLI metadata (name, version, description)
-- `globalOptions`: Global options available to all commands (optional)
 - `commands`: Object mapping command names to definitions
 
 #### `processConfig(config, args)`
@@ -201,7 +184,6 @@ Returns an object with:
 - `command`: The matched command definition
 - `options`: Parsed and validated options
 - `args`: Parsed and validated arguments
-- `globalOptions`: Parsed global options
 
 ## Changelog
 

@@ -24,8 +24,7 @@ export function defineCommand<
 }
 
 export function defineConfig<
-  TGlobalOptions extends z.ZodObject<any> = z.ZodObject<any>,
   TCommands extends Record<string, CommandDefinition<any, any>> = {},
->(config: DefineConfig<TGlobalOptions, TCommands>): DefineConfig<TGlobalOptions, TCommands> {
+>(config: DefineConfig<TCommands>): DefineConfig<TCommands> {
   return config;
 }
