@@ -235,5 +235,4 @@ describe('index', () => {
     const result = processConfig(config, ['test', '--files', 'single.txt']);
     expect(result.options).toEqual({ files: ['single.txt'] });
   });
-
 });

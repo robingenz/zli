@@ -23,8 +23,8 @@ export function defineCommand<
   return config as any;
 }
 
-export function defineConfig<
-  TCommands extends Record<string, CommandDefinition<any, any>> = {},
->(config: DefineConfig<TCommands>): DefineConfig<TCommands> {
+export function defineConfig<TCommands extends Record<string, CommandDefinition<any, any>> = {}>(
+  config: DefineConfig<TCommands>,
+): DefineConfig<TCommands> {
   return config;
 }

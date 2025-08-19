@@ -18,9 +18,7 @@ export interface CommandDefinition<
   ) => void | Promise<void>;
 }
 
-export interface DefineConfig<
-  TCommands extends Record<string, CommandDefinition<any, any>> = {},
-> {
+export interface DefineConfig<TCommands extends Record<string, CommandDefinition<any, any>> = {}> {
   meta?: {
     name?: string;
     version?: string;
