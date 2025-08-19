@@ -265,7 +265,7 @@ function displayCommandHelp(
     }
 
     for (const [key, zodType] of Object.entries(shape)) {
-      const description = (zodType as any)._def?.description || '';
+      const description = (zodType as any).description || '';
       const alias = Object.keys(aliases).find((alias) => aliases[alias] === key);
       const kebabKey = camelToKebab(key);
 
