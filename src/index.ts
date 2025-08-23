@@ -274,10 +274,17 @@ function displayCommandHelp(
         optionLine += `, \x1b[36m-${alias}\x1b[0m`;
       }
 
+      // Extract default value if present
+      const defaultValue = extractDefaultValue(zodType);
+      let finalDescription = description;
+      if (defaultValue !== undefined) {
+        finalDescription = description + (description ? ' ' : '') + `(default: ${defaultValue})`;
+      }
+
       // Add padding and description (accounting for color codes)
       const visibleLength = `  --${kebabKey}${alias ? `, -${alias}` : ''}`.length;
       const padding = ' '.repeat(Math.max(2, maxLength - visibleLength + 4));
-      console.log(`${optionLine}${padding}${description}`);
+      console.log(`${optionLine}${padding}${finalDescription}`);
     }
   }
 }
@@ -338,6 +345,44 @@ function isZodArrayType(zodType: any): boolean {
 
   // Check for ZodArray type name as instanceof might not work with different zod instances
   return innerType instanceof z.ZodArray || (innerType._def && innerType._def.typeName === 'ZodArray');
+}
+
+/**
+ * Extracts the default value from a Zod type, handling nested optional and default wrappers.
+ *
+ * @param zodType - The Zod type to extract default value from
+ * @returns The formatted default value if present, undefined otherwise
+ */
+function extractDefaultValue(zodType: any): string | undefined {
+  // Traverse through the type definition to find default value
+  let currentType = zodType;
+
+  while (currentType && currentType._def) {
+    // Check if this is a ZodDefault type
+    if (currentType.constructor.name === 'ZodDefault' || currentType._def.typeName === 'ZodDefault') {
+      // Handle both function and direct value defaults
+      const defaultValue = currentType._def.defaultValue;
+      const value = typeof defaultValue === 'function' ? defaultValue() : defaultValue;
+      
+      // Format the value based on its type
+      if (typeof value === 'string') {
+        return `"${value}"`;
+      }
+      
+      return String(value);
+    }
+
+    // Move to the inner type if it exists
+    if (currentType._def.innerType) {
+      currentType = currentType._def.innerType;
+    } else if (currentType._def.type) {
+      currentType = currentType._def.type;
+    } else {
+      break;
+    }
+  }
+
+  return undefined;
 }
 
 /**
