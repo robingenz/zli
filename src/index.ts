@@ -491,7 +491,9 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
       process.exit(0);
     } else if (config.defaultCommand) {
       // Use default command when no command is specified
-      return processCommandExecution(config.defaultCommand, parsedFlags, commandArgs) as ProcessResult<TCommands[keyof TCommands]>;
+      return processCommandExecution(config.defaultCommand, parsedFlags, commandArgs) as ProcessResult<
+        TCommands[keyof TCommands]
+      >;
     } else {
       // Show help and throw error
       displayHelp(config.commands, config.meta);
