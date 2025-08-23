@@ -363,12 +363,12 @@ function extractDefaultValue(zodType: any): string | undefined {
       // Handle both function and direct value defaults
       const defaultValue = currentType._def.defaultValue;
       const value = typeof defaultValue === 'function' ? defaultValue() : defaultValue;
-      
+
       // Format the value based on its type
       if (typeof value === 'string') {
         return `"${value}"`;
       }
-      
+
       return String(value);
     }
 
