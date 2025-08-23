@@ -235,4 +235,61 @@ describe('index', () => {
     const result = processConfig(config, ['test', '--files', 'single.txt']);
     expect(result.options).toEqual({ files: ['single.txt'] });
   });
+
+  it('should use default command when no command is specified', () => {
+    const defaultCommand = defineCommand({
+      description: 'Default command',
+      options: defineOptions(
+        z.object({
+          name: z.string().default('world'),
+        }),
+      ),
+      action: vi.fn(),
+    });
+
+    const config = defineConfig({
+      commands: {
+        greet: defaultCommand,
+      },
+      defaultCommand,
+    });
+
+    const result = processConfig(config, ['--name', 'Alice']);
+    expect(result.command).toBe(defaultCommand);
+    expect(result.options).toEqual({ name: 'Alice' });
+    expect(result.args).toEqual([]);
+  });
+
+  it('should still show help when --help is passed with default command', () => {
+    const defaultCommand = defineCommand({
+      description: 'Default command',
+      action: vi.fn(),
+    });
+
+    const config = defineConfig({
+      commands: {
+        greet: defaultCommand,
+      },
+      defaultCommand,
+    });
+
+    expect(() => processConfig(config, ['--help'])).toThrow('process.exit called');
+    expect(console.log).toHaveBeenCalled();
+  });
+
+  it('should throw error for unknown command even with default command configured', () => {
+    const defaultCommand = defineCommand({
+      description: 'Default command',
+      action: vi.fn(),
+    });
+
+    const config = defineConfig({
+      commands: {
+        greet: defaultCommand,
+      },
+      defaultCommand,
+    });
+
+    expect(() => processConfig(config, ['unknown'])).toThrow(/Unknown command:.*unknown/);
+  });
 });

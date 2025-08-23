@@ -14,6 +14,7 @@ A powerful CLI parser built with TypeScript and Zod for type-safe command-line i
 - 🔀 **Smart conversion**: Automatic kebab-case to camelCase conversion.
 - 🏷️ **Alias support**: Define short aliases for any option.
 - 📦 **Array handling**: Automatic normalization of single values to arrays.
+- 🎯 **Default commands**: Set a default command to run when no command is specified.
 - ❓ **Help message**: Automatic help generation for commands and options.
 - ⚠️ **Error handling**: Clear, actionable error messages.
 - 📦 **ESM support**: Modern ES modules with full TypeScript support.
@@ -58,6 +59,7 @@ const config = defineConfig({
   commands: {
     greet: greetCommand,
   },
+  defaultCommand: greetCommand,
 });
 
 // Process command line arguments
@@ -80,9 +82,36 @@ my-cli greet --help
 # Run commands
 my-cli greet --name Alice
 my-cli greet -n Bob --loud
+
+# Run default command
+my-cli --name Alice
+my-cli greet --name Alice
 ```
 
 ### Advanced Features
+
+#### Default Commands
+
+You can specify a default command that will be executed when no command is provided:
+
+```javascript
+const config = defineConfig({
+  meta: {
+    name: 'my-app',
+    version: '1.0.0',
+  },
+  commands: {
+    start: startCommand,
+    build: buildCommand,
+  },
+  defaultCommand: startCommand,
+});
+```
+
+With this configuration:
+- `my-app` will run the `startCommand`
+- `my-app --help` will still show the help message
+- `my-app build` will run the `build` command
 
 #### Commands with Arguments
 
@@ -176,6 +205,7 @@ Define the CLI configuration.
 
 - `meta`: CLI metadata (name, version, description)
 - `commands`: Object mapping command names to definitions
+- `defaultCommand`: Optional default command definition to run when no command is specified
 
 #### `processConfig(config, args)`
 

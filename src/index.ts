@@ -422,6 +422,45 @@ function validateOptions<T extends z.ZodObject<any> = z.ZodObject<any>>(
 }
 
 /**
+ * Processes a command with its options and arguments.
+ * Validates options using the command's schema and parses arguments if provided.
+ *
+ * @param command - The command definition to process
+ * @param parsedFlags - Parsed flags from command line
+ * @param args - Arguments to validate and process
+ * @returns Processed result containing command, options, and arguments
+ * @throws Error for validation failures
+ */
+function processCommandExecution<TCommand extends CommandDefinition<any, any>>(
+  command: TCommand,
+  parsedFlags: Record<string, any>,
+  args: string[],
+): ProcessResult<TCommand> {
+  // Process command options
+  const options = validateOptions(parsedFlags, command.options);
+
+  // Validate args if schema is provided
+  let validatedArgs: any = args;
+  if (command.args) {
+    try {
+      validatedArgs = command.args.parse(args);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const issues = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+        throw new Error(`Argument validation failed: ${issues}`);
+      }
+      throw error;
+    }
+  }
+
+  return {
+    command,
+    options,
+    args: validatedArgs,
+  } as ProcessResult<TCommand>;
+}
+
+/**
  * Main entry point for processing CLI configuration and arguments.
  * Parses command line arguments, validates options, and returns the processed result.
  * Handles help display, command validation, and option processing.
@@ -450,6 +489,11 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
       // Show help and exit successfully
       displayHelp(config.commands, config.meta);
       process.exit(0);
+    } else if (config.defaultCommand) {
+      // Use default command when no command is specified
+      return processCommandExecution(config.defaultCommand, parsedFlags, commandArgs) as ProcessResult<
+        TCommands[keyof TCommands]
+      >;
     } else {
       // Show help and throw error
       displayHelp(config.commands, config.meta);
@@ -471,28 +515,8 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
     process.exit(0);
   }
 
-  // Process command options
-  const options = validateOptions(parsedFlags, command.options);
-
-  // Validate args if schema is provided
-  let validatedArgs: any = remainingArgs;
-  if (command.args) {
-    try {
-      validatedArgs = command.args.parse(remainingArgs);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const issues = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
-        throw new Error(`Argument validation failed: ${issues}`);
-      }
-      throw error;
-    }
-  }
-
-  return {
-    command,
-    options,
-    args: validatedArgs,
-  } as ProcessResult<TCommands[keyof TCommands]>;
+  // Process the command
+  return processCommandExecution(command, parsedFlags, remainingArgs) as ProcessResult<TCommands[keyof TCommands]>;
 }
 
 // Export main functions and types from config

@@ -25,6 +25,7 @@ export interface DefineConfig<TCommands extends Record<string, CommandDefinition
     description?: string;
   };
   commands: TCommands;
+  defaultCommand?: CommandDefinition<any, any>;
 }
 
 export interface ProcessResult<TCommand extends CommandDefinition<any, any> = CommandDefinition<any, any>> {
