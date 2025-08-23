@@ -450,6 +450,32 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
       // Show help and exit successfully
       displayHelp(config.commands, config.meta);
       process.exit(0);
+    } else if (config.defaultCommand) {
+      // Use default command when no command is specified
+      const defaultCommand = config.defaultCommand;
+
+      // Process default command options
+      const options = validateOptions(parsedFlags, defaultCommand.options);
+
+      // Validate args if schema is provided
+      let validatedArgs: any = commandArgs;
+      if (defaultCommand.args) {
+        try {
+          validatedArgs = defaultCommand.args.parse(commandArgs);
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            const issues = error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+            throw new Error(`Argument validation failed: ${issues}`);
+          }
+          throw error;
+        }
+      }
+
+      return {
+        command: defaultCommand,
+        options,
+        args: validatedArgs,
+      } as ProcessResult<TCommands[keyof TCommands]>;
     } else {
       // Show help and throw error
       displayHelp(config.commands, config.meta);
