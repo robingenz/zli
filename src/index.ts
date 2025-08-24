@@ -522,4 +522,5 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
 
 // Export main functions and types from config
 export { defineOptions, defineCommand, defineConfig } from './config.js';
-export type { OptionsDefinition, CommandDefinition, DefineConfig, ProcessResult, ZliError } from './types.js';
+export { ZliError } from './types.js';
+export type { OptionsDefinition, CommandDefinition, DefineConfig, ProcessResult } from './types.js';
