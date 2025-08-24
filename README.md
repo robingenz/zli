@@ -17,6 +17,7 @@ A powerful CLI parser built with TypeScript and Zod for type-safe command-line i
 - 🎯 **Default commands**: Set a default command to run when no command is specified.
 - ❓ **Help message**: Automatic help generation for commands and options.
 - ⚠️ **Error handling**: Clear, actionable error messages.
+- 🚀 **Zero dependencies**: Only requires Zod as a peer dependency.
 - 📦 **ESM support**: Modern ES modules with full TypeScript support.
 
 ## Installation
