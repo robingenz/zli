@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.4](https://github.com/robingenz/zli/compare/v0.1.3...v0.1.4) (2025-08-24)
+
+
+### Bug Fixes
+
+* do not export `ZliError` as type ([0e0e52a](https://github.com/robingenz/zli/commit/0e0e52ab1f9797d2a23dae10da135f03afe0d8e3))
+
 ## [0.1.3](https://github.com/robingenz/zli/compare/v0.1.2...v0.1.3) (2025-08-24)
 
 
