@@ -30,7 +30,7 @@
     "clean": "rimraf dist",
     "fmt": "prettier --write \"src/**/*.{ts,js,json}\"",
     "lint": "prettier --check \"src/**/*.{ts,js,json}\"",
-    "test": "vitest",
+    "test": "vitest run",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
