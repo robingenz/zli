@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CommandDefinition, DefineConfig, OptionsDefinition, ProcessResult } from './types.js';
+import { ZliError } from './types.js';
 
 /**
  * Parses command line arguments into flags and non-flag arguments.
@@ -497,14 +498,14 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
     } else {
       // Show help and throw error
       displayHelp(config.commands, config.meta);
-      throw new Error('No command specified.');
+      throw new ZliError('No command specified.');
     }
   }
 
   const command = config.commands[commandName];
   if (!command) {
     displayHelp(config.commands, config.meta);
-    throw new Error(`Unknown command: \x1b[36m${commandName}\x1b[0m`);
+    throw new ZliError(`Unknown command: \x1b[36m${commandName}\x1b[0m`);
   }
 
   const remainingArgs = commandArgs.slice(1);

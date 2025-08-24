@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export class ZliError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ZliError';
+  }
+}
+
 export interface OptionsDefinition<T extends z.ZodObject<any> = z.ZodObject<any>> {
   schema: T;
   aliases?: Record<string, string> | undefined;

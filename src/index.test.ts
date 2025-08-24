@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { z } from 'zod';
 import { processConfig, defineConfig, defineCommand, defineOptions } from './index.js';
+import { ZliError } from './types.js';
 
 describe('index', () => {
   // Mock console methods
@@ -215,6 +216,7 @@ describe('index', () => {
       },
     });
 
+    expect(() => processConfig(config, [])).toThrow(ZliError);
     expect(() => processConfig(config, [])).toThrow('No command specified.');
   });
 
