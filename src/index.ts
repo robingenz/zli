@@ -486,7 +486,11 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
   const commandName = commandArgs[0];
 
   if (!commandName) {
-    if (parsedFlags.help === true) {
+    if (parsedFlags.version === true && config.meta?.version) {
+      // Show version and exit successfully
+      console.log(config.meta.version);
+      process.exit(0);
+    } else if (parsedFlags.help === true) {
       // Show help and exit successfully
       displayHelp(config.commands, config.meta);
       process.exit(0);
