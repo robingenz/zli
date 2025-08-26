@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.5](https://github.com/robingenz/zli/compare/v0.1.4...v0.1.5) (2025-08-26)
+
+
+### Features
+
+* support `--version` argument ([f447b95](https://github.com/robingenz/zli/commit/f447b951984d17cee2335f2dd0f270d997aafd5b))
+
 ## [0.1.4](https://github.com/robingenz/zli/compare/v0.1.3...v0.1.4) (2025-08-24)
 
 
