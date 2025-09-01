@@ -478,7 +478,7 @@ function processCommandExecution<TCommand extends CommandDefinition<any, any>>(
 export function processConfig<TCommands extends Record<string, CommandDefinition<any, any>> = {}>(
   config: DefineConfig<TCommands>,
   args: string[],
-): ProcessResult<TCommands[keyof TCommands]> {
+): ProcessResult<CommandDefinition<any, any>> {
   const parsedFlags = parseFlags(args);
   const commandArgs = (parsedFlags._ as string[]) || [];
 
@@ -496,9 +496,7 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
       process.exit(0);
     } else if (config.defaultCommand) {
       // Use default command when no command is specified
-      return processCommandExecution(config.defaultCommand, parsedFlags, commandArgs) as ProcessResult<
-        TCommands[keyof TCommands]
-      >;
+      return processCommandExecution(config.defaultCommand, parsedFlags, commandArgs);
     } else {
       // Show help and throw error
       displayHelp(config.commands, config.meta);
@@ -521,7 +519,7 @@ export function processConfig<TCommands extends Record<string, CommandDefinition
   }
 
   // Process the command
-  return processCommandExecution(command, parsedFlags, remainingArgs) as ProcessResult<TCommands[keyof TCommands]>;
+  return processCommandExecution(command, parsedFlags, remainingArgs);
 }
 
 // Export main functions and types from config
