@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.6](https://github.com/robingenz/zli/compare/v0.1.5...v0.1.6) (2025-09-01)
+
+
+### Bug Fixes
+
+* `Argument of type 'any' is not assignable to parameter of type 'never'` error when `args` was used ([d768e96](https://github.com/robingenz/zli/commit/d768e96c4bd0c570c7a10d6799f43435008976e8))
+
 ## [0.1.5](https://github.com/robingenz/zli/compare/v0.1.4...v0.1.5) (2025-08-26)
 
 
