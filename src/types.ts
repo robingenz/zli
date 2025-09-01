@@ -37,6 +37,14 @@ export interface DefineConfig<TCommands extends Record<string, CommandDefinition
 
 export interface ProcessResult<TCommand extends CommandDefinition<any, any> = CommandDefinition<any, any>> {
   command: TCommand;
-  options: any;
-  args: any;
+  options: TCommand extends CommandDefinition<infer TOptions, any>
+    ? TOptions extends z.ZodObject<any>
+      ? z.infer<TOptions>
+      : {}
+    : any;
+  args: TCommand extends CommandDefinition<any, infer TArgs>
+    ? TArgs extends z.ZodType
+      ? z.infer<TArgs>
+      : undefined
+    : any;
 }
