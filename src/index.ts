@@ -349,6 +349,18 @@ function isZodArrayType(zodType: any): boolean {
 }
 
 /**
+ * Creates an error for unknown options with proper flag prefix and display name.
+ *
+ * @param optionName - The unknown option name
+ * @returns ZliError with formatted error message
+ */
+function createUnknownOptionError(optionName: string): ZliError {
+  const flagPrefix = optionName.length === 1 ? '-' : '--';
+  const displayName = optionName.length === 1 ? optionName : camelToKebab(optionName);
+  return new ZliError(`Unknown option: \x1b[36m${flagPrefix}${displayName}\x1b[0m`);
+}
+
+/**
  * Extracts the default value from a Zod type, handling nested optional and default wrappers.
  *
  * @param zodType - The Zod type to extract default value from
@@ -390,11 +402,12 @@ function extractDefaultValue(zodType: any): string | undefined {
  * Validates and transforms command options using Zod schema validation.
  * Processes aliases and kebab-case conversion before validation.
  * Ensures that single values for array fields are converted to arrays.
+ * Throws an error if any unknown options are provided.
  *
  * @param flags - Raw parsed flags from command line
  * @param optionsDef - Optional options definition with schema and aliases
  * @returns Validated options object matching the schema
- * @throws Error if validation fails
+ * @throws Error if validation fails or unknown options are provided
  *
  * @example
  * validateOptions({ 'android-max': '10' }, { schema: z.object({ androidMax: z.string() }) })
@@ -409,15 +422,52 @@ function validateOptions<T extends z.ZodObject<any> = z.ZodObject<any>>(
   optionsDef?: OptionsDefinition<T>,
 ): any {
   if (!optionsDef) {
+    // Check for unknown options when no schema is defined
+    const { _, ...options } = flags;
+    const unknownOptions = Object.keys(options);
+    if (unknownOptions.length > 0) {
+      // Find the first unknown option that looks like a flag
+      const firstUnknown = unknownOptions.find((key) => key !== 'help' && key !== 'version');
+      if (firstUnknown) {
+        throw createUnknownOptionError(firstUnknown);
+      }
+    }
     return {};
+  }
+
+  // Get valid option names from schema
+  const schemaKeys = Object.keys(optionsDef.schema.shape);
+  const validNames = new Set<string>();
+
+  // Add camelCase names
+  schemaKeys.forEach((key) => validNames.add(key));
+
+  // Add kebab-case versions
+  schemaKeys.forEach((key) => validNames.add(camelToKebab(key)));
+
+  // Add aliases
+  if (optionsDef.aliases) {
+    Object.keys(optionsDef.aliases).forEach((alias) => validNames.add(alias));
+  }
+
+  // Add standard help and version flags
+  validNames.add('help');
+  validNames.add('version');
+
+  // Check for unknown options before processing
+  const { _, ...options } = flags;
+  for (const optionName of Object.keys(options)) {
+    if (!validNames.has(optionName)) {
+      throw createUnknownOptionError(optionName);
+    }
   }
 
   const resolvedAliases = resolveAliases(flags, optionsDef.aliases);
   const resolvedKebab = resolveKebabCase(resolvedAliases, optionsDef.schema);
-  const { _, ...options } = resolvedKebab;
+  const { _: resolvedUnderscore, ...resolvedOptions } = resolvedKebab;
 
   // Normalize single values to arrays for fields that expect arrays
-  const normalizedOptions = normalizeArrayFields(options, optionsDef.schema);
+  const normalizedOptions = normalizeArrayFields(resolvedOptions, optionsDef.schema);
 
   return optionsDef.schema.parse(normalizedOptions);
 }

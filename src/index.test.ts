@@ -294,4 +294,123 @@ describe('index', () => {
 
     expect(() => processConfig(config, ['unknown'])).toThrow(/Unknown command:.*unknown/);
   });
+
+  it('should throw error for unknown long option', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          options: defineOptions(
+            z.object({
+              verbose: z.boolean().default(false),
+            }),
+          ),
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    expect(() => processConfig(config, ['test', '--unknown'])).toThrow(ZliError);
+    expect(() => processConfig(config, ['test', '--unknown'])).toThrow('Unknown option: \x1b[36m--unknown\x1b[0m');
+  });
+
+  it('should throw error for unknown short option', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          options: defineOptions(
+            z.object({
+              verbose: z.boolean().default(false),
+            }),
+            { v: 'verbose' },
+          ),
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    expect(() => processConfig(config, ['test', '-x'])).toThrow(ZliError);
+    expect(() => processConfig(config, ['test', '-x'])).toThrow('Unknown option: \x1b[36m-x\x1b[0m');
+  });
+
+  it('should throw error for unknown option with kebab-case display', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          options: defineOptions(
+            z.object({
+              verbose: z.boolean().default(false),
+            }),
+          ),
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    expect(() => processConfig(config, ['test', '--no-build'])).toThrow(ZliError);
+    expect(() => processConfig(config, ['test', '--no-build'])).toThrow('Unknown option: \x1b[36m--no-build\x1b[0m');
+  });
+
+  it('should allow valid kebab-case options', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          options: defineOptions(
+            z.object({
+              androidMax: z.string(),
+              verbose: z.boolean().default(false),
+            }),
+          ),
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    const result = processConfig(config, ['test', '--android-max', '10', '--verbose']);
+    expect(result.options).toEqual({ androidMax: '10', verbose: true });
+  });
+
+  it('should allow standard help and version flags', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          options: defineOptions(
+            z.object({
+              name: z.string(),
+            }),
+          ),
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    // Help should trigger exit, not unknown option error
+    expect(() => processConfig(config, ['test', '--help'])).toThrow('process.exit called');
+  });
+
+  it('should throw error for unknown option when no schema defined', () => {
+    const config = defineConfig({
+      commands: {
+        test: defineCommand({
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    expect(() => processConfig(config, ['test', '--unknown'])).toThrow(ZliError);
+    expect(() => processConfig(config, ['test', '--unknown'])).toThrow('Unknown option: \x1b[36m--unknown\x1b[0m');
+  });
+
+  it('should allow help and version when no schema defined', () => {
+    const config = defineConfig({
+      meta: { version: '1.0.0' },
+      commands: {
+        test: defineCommand({
+          action: vi.fn(),
+        }),
+      },
+    });
+
+    // Help should trigger exit, not unknown option error
+    expect(() => processConfig(config, ['test', '--help'])).toThrow('process.exit called');
+  });
 });
