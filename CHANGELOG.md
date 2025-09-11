@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.0](https://github.com/robingenz/zli/compare/v0.1.7...v0.2.0) (2025-09-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* An error is now thrown when an unsupported option is used.
+
+### Features
+
+* throw error if option is unknown ([#6](https://github.com/robingenz/zli/issues/6)) ([6858b73](https://github.com/robingenz/zli/commit/6858b73ad6420e6baa16e3db14e47e502086a1e5))
+
 ## [0.1.7](https://github.com/robingenz/zli/compare/v0.1.6...v0.1.7) (2025-09-01)
 
 
